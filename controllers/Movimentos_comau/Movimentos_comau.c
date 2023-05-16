@@ -19,11 +19,11 @@ int main(int argc, char **argv)
    int i=0;
    int key=-1;
    float posicao[10][7];
-   double posicao_atual[7];
-   float step_arm = 0.01;
+   float posicao_atual[7];
+   float step_arm = 0.001;
    int motor = 0;
    //Motor =             -1-  -2-  -3-  -4-   -5-  -6-
-   double vel[7] = {0.0, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2};
+   float vel[7] = {0.0, 5, 5, 5, 5, 10, 5};
    
    //Definição de Motores
    WbDeviceTag M[7];
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
    for(i=1;i<7;i++)
      wb_motor_set_velocity(M[i], vel[i]);
    
-   //Definição da Posição 0 do Robo
+   //Definição da Posição de trabalho do Robo
    posicao[0][1] = 0.0;
    posicao[0][2] = 0.72;
    posicao[0][3] = 0.51;
@@ -58,15 +58,25 @@ int main(int argc, char **argv)
    posicao[0][5] = -1.24;
    posicao[0][6] = 0.0;
    
+   //Definição da Posição de Home do Robo
+   posicao[1][1] = 0.0;
+   posicao[1][2] = 0.0;
+   posicao[1][3] = 0.0;
+   posicao[1][4] = 0.0;
+   posicao[1][5] = 0.0;
+   posicao[1][6] = 0.0;
+   
    //Loop
   while (wb_robot_step(TIME_STEP) != -1) 
   {
-   
+  
    key = wb_keyboard_get_key();
      
    if (key >= 0)
    {  
-      printf("Entrou: %d\n\n",key);
+      printf("\n ---------------------------------"); 
+      printf("\n Key: %d",key);
+      
       switch (key) 
       {
         case '1':
@@ -97,52 +107,57 @@ int main(int argc, char **argv)
           for(i=1;i<7;i++)
               wb_motor_set_position(M[i],  posicao[0][i]);
         break;
+        
+        case 72: //Posição inicial - Tecla : "H"
+          for(i=1;i<7;i++)
+              wb_motor_set_position(M[i],  posicao[1][i]);
+        break;
           
         case WB_KEYBOARD_UP: //Movimentar robo
           if(motor > 0)
           {
-            posicao_atual[motor] = wb_position_sensor_get_value(s_position[motor]);
+            posicao_atual[motor] = (round(wb_position_sensor_get_value(s_position[motor])*1000))/1000;
             posicao_atual[motor] = posicao_atual[motor] + step_arm;
             wb_motor_set_position(M[motor],posicao_atual[motor]);
-            wb_robot_step(50);
-            printf("\nMotor %d , Posicao %f\n",motor,posicao_atual[motor]);
+            printf("\n Motor %d , Posicao Para atual: %.3f",motor,posicao_atual[motor]);
           }
         break;
           
         case WB_KEYBOARD_DOWN: //Movimentar robo
           if(motor > 0)
           {
-            //posicao_atual[motor] = wb_motor_get_position_sensor(M[motor]);
+            posicao_atual[motor] = wb_position_sensor_get_value(s_position[motor]);
             posicao_atual[motor] = posicao_atual[motor] - step_arm;
             wb_motor_set_position(M[motor],posicao_atual[motor]);
-            wb_motor_set_position(M[motor],posicao_atual[motor]);
-            wb_robot_step(50);
-            printf("\nMotor %d , Posicao %f\n",motor,posicao_atual[motor]);
-          
-           // while(wb_motor_get_position_sensor(M[motor]) != posicao_atual[motor]);
+            printf("\nMotor %d , Posicao %.3f\n",motor,posicao_atual[motor]);
           }
         break;
           
         case 85: //Velocidade de step alta - Tecla U
-          step_arm = 0.1;
-        break;
-          
-        case 68: //Velocidade de step baixa - Tecla D
           step_arm = 0.01;
         break;
           
-        case 65: //Altomático - Tecla A
+        case 76: //Velocidade de step baixa - Tecla l
+          step_arm = 0.001;
+        break;
+          
+        case 65: //Automático - Tecla A
         break;
          
         case 80://Imprimir posição atual do Robô - Tecla P
           for(i=1;i<7;i++)
-            posicao_atual[i]= wb_position_sensor_get_value(s_position[i]);
-          printf("\nPos=  {%f,%f,%f,%f,%f,%f}, \n",posicao_atual[1],posicao_atual[2],posicao_atual[3],posicao_atual[4],posicao_atual[5],posicao_atual[6]);   
-        break;
-          
+            posicao_atual[i]= round(wb_position_sensor_get_value(s_position[i])*1000)/1000;
+          printf("\nPos=  {%.3f,%.3f,%.3f,%.3f,%.3f,%.3f}, \n",posicao_atual[1],posicao_atual[2],posicao_atual[3],posicao_atual[4],posicao_atual[5],posicao_atual[6]);   
+        break;  
        }
+    
+     while(key!=-1)
+        {
+          wb_robot_step(10);
+          key = wb_keyboard_get_key();
+        }
     }
-  };
+};
   
   
 wb_robot_cleanup();
